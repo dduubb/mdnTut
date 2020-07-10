@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Drake's Gamedev Canvas Workshop</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        canvas {
+            background: #ee0;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="myCanvas" width="960" height="640"></canvas>
+
+    <script>
+        //Drake wrote this code
+
+        const canvas = document.getElementById("myCanvas"),
+            ctx = canvas.getContext("2d"),
+            ballRadius = 7,
+            canvasWidth = canvas.width,
+            canvasHeight = canvas.height,
+            paddleHeight = 10,
+            paddleWidth = 75;
+
+        let dx = 2,
+            dy = -2,
+            x = canvasWidth / 2,
+            y = canvasHeight - 2 * ballRadius,
+            paddleX = (canvas.width - paddleWidth) / 2,
+            rightPressed = false,
+            leftPressed = false;
+
+
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#0095DD';
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            drawBall();
+            if (y + dy > canvasHeight - ballRadius || y + dy < ballRadius) {
+                dy = -dy;
+            }
+            if (x + dx > canvasWidth - ballRadius || x + dx < ballRadius) {
+                dx = -dx;
+            }
+            x += dx;
+            y += dy; // new y = old y + dy
+
+            drawPaddle();
+            movePaddle();
+        }
+
+        function drawPaddle() {
+
+            ctx.beginPath();
+            ctx.rect(paddleX, canvasHeight - paddleHeight, paddleWidth, paddleHeight);
+            ctx.fillStyle = "#0095DD";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function movePaddle() {
+            if (rightPressed) {
+                paddleX += 7;
+            } else if (leftPressed) {
+                paddleX -= 7;
+            }
+        }
+
+        document.addEventListener("keydown", keyDownHandler, false);
+        document.addEventListener("keyup", keyUpHandler, false);
+
+        function keyDownHandler(e) {
+            if (e.key == "Right" || e.key == "ArrowRight") {
+                rightPressed = true;
+            } else if (e.key == "Left" || e.key == "ArrowLeft") {
+                leftPressed = true;
+            }
+        }
+
+        function keyUpHandler(e) {
+            if (e.key == "Right" || e.key == "ArrowRight") {
+                rightPressed = false;
+            } else if (e.key == "Left" || e.key == "ArrowLeft") {
+                leftPressed = false;
+            }
+        }
+        setInterval(draw, 10);
+    </script>
+
+</body></html>
