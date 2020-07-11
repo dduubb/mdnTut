@@ -26,20 +26,86 @@
 
         const canvas = document.getElementById("myCanvas"),
             ctx = canvas.getContext("2d"),
-            ballRadius = 7,
+            ballRadius = 10,
             canvasWidth = canvas.width,
             canvasHeight = canvas.height,
             paddleHeight = 10,
-            paddleWidth = 75;
+            paddleWidth = 75,
+            brickConst = {
+                rowCount: 3,
+                columnCount: 10,
+                width: 68,
+                height: 20,
+                padding: 10,
+                offsetTop: 30,
+                offsetLeft: 30
+            },
+            bricks = [];
+        
+       brickConst.width = (-brickConst.columnCount*brickConst.padding-2*brickConst.offsetLeft+brickConst.padding+canvasWidth)/brickConst.columnCount
+        
+        //create empty blocks
+        for (var c = 0; c < brickConst.columnCount; c++) {
+            bricks[c] = [];
+            for (var r = 0; r < brickConst.rowCount; r++) {
+                bricks[c][r] = {
+                    x: 0,
+                    y: 0,
+                    status: 1
+                };
+            }
+        }
 
-        let dx = 2,
-            dy = -2,
+        let changeTough = 0.1;
+            dx = 2.5,
+            dy = -2.5,
             x = canvasWidth / 2,
             y = canvasHeight - 2 * ballRadius,
-            paddleX = (canvas.width - paddleWidth) / 2,
+            paddleX = (canvasWidth - paddleWidth) / 2,
             rightPressed = false,
-            leftPressed = false;
+            leftPressed = false,
+            myInterval = 20,
+            score = 0,
+            highScore = localStorage.getItem("highScore") ? localStorage.getItem("highScore") : 0;
 
+        function drawBricks() {
+            for (let c = 0; c < brickConst.columnCount; c++) {
+                for (let r = 0; r < brickConst.rowCount; r++) {
+                    if (bricks[c][r].status == 1) {
+                        let brickX = (c * (brickConst.width + brickConst.padding)) + brickConst.offsetLeft;
+                        let brickY = (r * (brickConst.height + brickConst.padding)) + brickConst.offsetTop;
+                        bricks[c][r].x = brickX;
+                        bricks[c][r].y = brickY;
+                        ctx.beginPath();
+                        ctx.rect(brickX, brickY, brickConst.width, brickConst.height);
+                        ctx.fillStyle = "#0095DD";
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+        
+        function drawHigh() {
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "#0095DD";
+    ctx.fillText(`High Score: ${highScore}`, canvasWidth-150, 20);
+}
+
+        function collisionDetection() {
+            for (let c = 0; c < brickConst.columnCount; c++) {
+                for (let r = 0; r < brickConst.rowCount; r++) {
+                    let b = bricks[c][r];
+                    if (b.status == 1) {
+                        if (x > b.x && x < b.x + brickConst.width && y > b.y && y < b.y + brickConst.height) {
+                            dy = -dy;
+                            b.status = 0;
+                            score++;
+                        }
+                    }
+                }
+            }
+        }
 
         function drawBall() {
             ctx.beginPath();
@@ -49,12 +115,39 @@
             ctx.closePath();
         }
 
+        function drawScore() {
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "#0095DD";
+            ctx.fillText("Score: " + score, 8, 20);
+        }
+
         function draw() {
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            drawBricks();
             drawBall();
-            if (y + dy > canvasHeight - ballRadius || y + dy < ballRadius) {
+            drawScore();
+            collisionDetection();
+drawHigh();
+
+            if (y + dy < ballRadius) {
                 dy = -dy;
+            } else if (y + dy >= canvasHeight - ballRadius) {
+                if (x > paddleX && x < paddleX + paddleWidth) {
+                    dy = -dy+changeTough;
+                    myInterval += -1;
+                    score += 10;
+                    console.log(myInterval);
+                } else {
+                    alert(`GAME OVER your score was ${score}`);
+                    if (score > highScore){
+                        highScore= score;
+                        localStorage.setItem("highScore",highScore.toString());
+                    }
+                    document.location.reload();
+                    clearInterval(interval);
+                }
             }
+
             if (x + dx > canvasWidth - ballRadius || x + dx < ballRadius) {
                 dx = -dx;
             }
@@ -63,6 +156,7 @@
 
             drawPaddle();
             movePaddle();
+            requestAnimationFrame(draw);
         }
 
         function drawPaddle() {
@@ -84,12 +178,18 @@
 
         document.addEventListener("keydown", keyDownHandler, false);
         document.addEventListener("keyup", keyUpHandler, false);
+        document.addEventListener("mousemove", mouseMoveHandler, false);
+
 
         function keyDownHandler(e) {
+            //console.log(e);
             if (e.key == "Right" || e.key == "ArrowRight") {
                 rightPressed = true;
             } else if (e.key == "Left" || e.key == "ArrowLeft") {
                 leftPressed = true;
+            } else if (e.key == "c") {
+                localStorage.clear();
+                highScore = 0;
             }
         }
 
@@ -100,7 +200,15 @@
                 leftPressed = false;
             }
         }
-        setInterval(draw, 10);
+
+        function mouseMoveHandler(e) {
+            var relativeX = e.clientX - canvas.offsetLeft;
+            if (relativeX > 0 && relativeX < canvas.width) {
+                paddleX = relativeX - paddleWidth / 2;
+            }
+        }
+        //let interval = setInterval(draw, myInterval);
+        draw();
     </script>
 
 </body></html>
